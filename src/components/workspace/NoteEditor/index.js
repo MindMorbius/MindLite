@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import EditorToolbar from './EditorToolbar';
 import EditorContent from './EditorContent';
 import EditorStatusBar from './EditorStatusBar';
+import EmptyState from '../EmptyState';
 
 export default function NoteEditor() {
   const { notes, activeNoteId } = useStore();
@@ -26,6 +27,15 @@ export default function NoteEditor() {
       setLocalContent('');
     }
   }, [activeNote]);
+
+  // 如果没有笔记，显示空状态
+  if (notes.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm min-h-[calc(100vh-8rem)] md:min-h-[600px]">
+        <EmptyState />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm min-h-[calc(100vh-8rem)] md:min-h-[600px] flex flex-col">

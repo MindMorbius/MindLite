@@ -17,11 +17,20 @@ import { Menu } from '@headlessui/react';
 import { useStore } from '@/lib/store';
 
 export default function WorkspaceNav({ onMenuClick }) {
-  const { notes, addQuickNote } = useStore();
+  const { notes, addQuickNote, addNote } = useStore();
   
   const totalNotes = notes.length;
   const quickNotes = notes.filter(note => note.path === '/速记').length;
   const pinnedNotes = notes.filter(note => note.pinned).length;
+
+  const handleAddNote = () => {
+    const now = new Date();
+    addNote({
+      id: now.getTime().toString(),
+      title: '未命名笔记',
+      content: '',
+    });
+  };
 
   return (
     <nav className="h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -36,15 +45,26 @@ export default function WorkspaceNav({ onMenuClick }) {
           >
             <MenuIcon className="w-5 h-5" />
           </Button>
-          <Button 
-            onClick={addQuickNote} 
-            size="sm" 
-            variant="primary"
-            className="min-w-[80px] flex items-center justify-center"
-          >
-            <PlusIcon className="w-5 h-5 mr-1" />
-            <span>速记</span>
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              onClick={addQuickNote} 
+              size="sm" 
+              variant="primary"
+              className="min-w-[80px] flex items-center justify-center"
+            >
+              <PlusIcon className="w-5 h-5 mr-1" />
+              <span>速记</span>
+            </Button>
+            <Button 
+              onClick={handleAddNote}
+              size="sm" 
+              variant="secondary"
+              className="min-w-[80px] flex items-center justify-center"
+            >
+              <PlusIcon className="w-5 h-5 mr-1" />
+              <span>笔记</span>
+            </Button>
+          </div>
           <div className="hidden md:flex items-center divide-x divide-gray-200 dark:divide-gray-700">
             <span className="px-3 text-sm text-gray-600 dark:text-gray-300">笔记: {totalNotes}</span>
             <span className="px-3 text-sm text-gray-600 dark:text-gray-300">速记: {quickNotes}</span>
