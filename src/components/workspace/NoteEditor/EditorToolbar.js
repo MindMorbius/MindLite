@@ -5,31 +5,34 @@ export default function EditorToolbar({
   setIsPreview, 
   showMarkmap, 
   setShowMarkmap,
-  saveStatus 
+  className
 }) {
   return (
-    <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
-      <div className="flex items-center space-x-2 md:space-x-4 overflow-x-auto">
-        <Button
-          onClick={() => setIsPreview(!isPreview)}
-          variant={isPreview ? 'primary' : 'default'}
-        >
-          {isPreview ? '编辑' : '预览'}
-        </Button>
-        
+    <div className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 overflow-x-auto scrollbar-none rounded-lg ${className}`}>
+      <Button
+        onClick={() => {
+          setIsPreview(!isPreview);
+          if(isPreview) {
+            setShowMarkmap(false);
+          }
+        }}
+        variant={isPreview ? 'primary' : 'default'}
+        className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md transition-all duration-200
+          whitespace-nowrap min-w-[4rem] sm:min-w-[5rem] hover:scale-[1.02] active:scale-[0.98]"
+      >
+        {isPreview ? '编辑' : '预览'}
+      </Button>
+      
+      {isPreview && (
         <Button
           onClick={() => setShowMarkmap(!showMarkmap)}
-          variant={showMarkmap ? 'primary' : 'default'}
+          variant={showMarkmap ? 'primary' : 'default'} 
+          className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-md transition-all duration-200
+            whitespace-nowrap min-w-[4rem] sm:min-w-[5rem] hover:scale-[1.02] active:scale-[0.98]"
         >
           思维导图
         </Button>
-      </div>
-
-      <div className="text-sm text-gray-500 dark:text-gray-400">
-        {saveStatus === 'saving' && '保存中...'}
-        {saveStatus === 'saved' && '已保存'}
-        {saveStatus === 'error' && '保存失败'}
-      </div>
+      )}
     </div>
   );
 }

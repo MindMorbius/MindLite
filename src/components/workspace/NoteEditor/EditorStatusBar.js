@@ -1,7 +1,7 @@
-import { ClockIcon, ArrowPathIcon, DocumentTextIcon, FolderIcon } from '@heroicons/react/24/solid';
+import { ClockIcon, ArrowPathIcon, DocumentTextIcon, FolderIcon, EyeIcon } from '@heroicons/react/24/solid';
 import { useStore } from '@/lib/store';
 
-export default function EditorStatusBar({ activeNote, localContent }) {
+export default function EditorStatusBar({ activeNote, localContent, saveStatus, className }) {
   const { categories } = useStore();
 
   const getWordCount = (text) => {
@@ -26,27 +26,39 @@ export default function EditorStatusBar({ activeNote, localContent }) {
   };
 
   return (
-    <div className="mt-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-      <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
-        <div className="flex items-center space-x-1">
-          <ClockIcon className="w-4 h-4" />
-          <span>创建于 {formatDate(activeNote?.createdAt)}</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <ArrowPathIcon className="w-4 h-4" />
-          <span>更新于 {formatDate(activeNote?.updatedAt)}</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <DocumentTextIcon className="w-4 h-4" />
-          <span>{getWordCount(localContent)} 字</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <FolderIcon className="w-4 h-4" />
-          <span>
-            {categories.find(c => c.id === activeNote?.categoryId)?.name || '所有笔记'}
-          </span>
-        </div>
-      </div>
+    <div className={`flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 whitespace-nowrap text-right ${className}`}>
+      <span className="flex items-center gap-1">
+        <ClockIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        {saveStatus === 'saving' && '保存中...'}
+        {saveStatus === 'saved' && '已保存'}
+        {saveStatus === 'error' && '保存失败'}
+      </span>
+
+      <span className="flex items-center gap-1">
+        <DocumentTextIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        {localContent.length}字
+      </span>
+
+      {activeNote?.createdAt && (
+        <span className="hidden sm:flex items-center gap-1" title="创建时间">
+          <ArrowPathIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          {formatDate(activeNote.createdAt)}
+        </span>
+      )}
+
+      {activeNote?.updatedAt && activeNote.updatedAt !== activeNote.createdAt && (
+        <span className="flex items-center gap-1" title="更新时间">
+          <ArrowPathIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          {formatDate(activeNote.updatedAt)}
+        </span>
+      )}
+
+      {activeNote?.lastViewedAt && (
+        <span className="hidden sm:flex items-center gap-1" title="最后查看">
+          <EyeIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          {formatDate(activeNote.lastViewedAt)}
+        </span>
+      )}
     </div>
   );
 }

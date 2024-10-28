@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* 改为统一的网格布局，移动端也保持两列 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 [grid-auto-flow:dense] last:[&>*]:col-span-full md:last:[&>*]:col-span-1">
           <WeatherWidget />
           <QuoteWidget />
           <GithubTrends />

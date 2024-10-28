@@ -1,10 +1,12 @@
-export default function Button({ 
+import { forwardRef } from 'react';
+
+const Button = forwardRef(({ 
   children, 
   variant = 'default', // default, primary, danger
   size = 'md', // sm, md, lg
   className = '',
   ...props 
-}) {
+}, ref) => {
   const baseStyles = 'rounded transition-colors';
   const variants = {
     default: 'hover:bg-gray-100 dark:hover:bg-gray-700',
@@ -19,10 +21,15 @@ export default function Button({
 
   return (
     <button 
+      ref={ref}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}
     </button>
   );
-}
+});
+
+Button.displayName = 'Button';
+
+export default Button;

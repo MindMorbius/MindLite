@@ -4,11 +4,12 @@ import { debounce } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import MarkmapView from './Markmap';
+
+// 添加代码高亮样式
+import 'highlight.js/styles/github-dark.css';
 
 export default function EditorContent({
   localTitle,
@@ -64,7 +65,7 @@ export default function EditorContent({
       <input
         type="text"
         placeholder="无标题"
-        className="w-full text-xl md:text-2xl font-bold bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500"
+        className="w-full px-2 text-lg sm:text-xl md:text-2xl font-bold bg-transparent border-none outline-none placeholder-gray-400 dark:placeholder-gray-500"
         value={localTitle}
         onChange={handleTitleChange}
       />
@@ -72,18 +73,17 @@ export default function EditorContent({
       {showMarkmap ? (
         <MarkmapView content={localContent} show={showMarkmap} />
       ) : isPreview ? (
-        <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none">
+        <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
           <ReactMarkdown 
-            remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
-            rehypePlugins={[rehypeKatex, rehypeHighlight, rehypeRaw]}
-          >
-            {localContent}
-          </ReactMarkdown>
+            children={localContent}
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            rehypePlugins={[rehypeHighlight, rehypeRaw]}
+          />
         </article>
       ) : (
         <textarea
           placeholder="开始输入..."
-          className="w-full h-[calc(100vh-16rem)] md:h-[500px] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm"
+          className="w-full h-[calc(100vh-12rem)] sm:h-[calc(100vh-16rem)] md:h-[500px] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm"
           value={localContent}
           onChange={handleContentChange}
         />

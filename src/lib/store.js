@@ -5,24 +5,40 @@ export const useStore = create(
   persist(
     (set) => ({
       notes: [],
-      categories: [{ id: 'default', name: '所有笔记' }],
+      folders: [{ id: 'root', name: '所有笔记', parentId: null }],
       activeNoteId: null,
-      activeCategory: 'default',
+      activeFolder: 'root',
       
-      setActiveNote: (id) => set({ activeNoteId: id }),
-      setActiveCategory: (id) => set({ activeCategory: id }),
+      setActiveNote: (id) => set((state) => {
+        if (!id) return { activeNoteId: null };
+        return { 
+          activeNoteId: id,
+          notes: state.notes.map(note => 
+            note.id === id 
+              ? { ...note, lastViewedAt: new Date().toISOString() }
+              : note
+          )
+        };
+      }),
       
-      addCategory: (name) => set((state) => ({
-        categories: [...state.categories, {
+      setActiveFolder: (id) => set({ activeFolder: id }),
+      
+      addFolder: ({ name, parentId = null }) => set((state) => ({
+        folders: [...state.folders, {
           id: Date.now().toString(),
-          name
+          name,
+          parentId
         }]
       })),
       
       addNote: (note) => set((state) => ({ 
         notes: [...state.notes, {
           ...note,
-          categoryId: state.activeCategory
+          // 只有当 activeFolder 不是 root 时才设置 folderId
+          folderId: state.activeFolder === 'root' ? null : state.activeFolder,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastViewedAt: new Date().toISOString()
         }],
         activeNoteId: note.id 
       })),
@@ -37,18 +53,31 @@ export const useStore = create(
         })
       })),
       
-      updateCategory: (id, name) => set((state) => ({
-        categories: state.categories.map(cat => 
-          cat.id === id ? { ...cat, name } : cat
+      updateFolder: (id, updates) => set((state) => ({
+        folders: state.folders.map(folder => 
+          folder.id === id ? { ...folder, ...updates } : folder
         )
       })),
       
-      deleteCategory: (id) => set((state) => ({
-        categories: state.categories.filter(cat => cat.id !== id),
-        notes: state.notes.map(note => 
-          note.categoryId === id ? { ...note, categoryId: 'default' } : note
-        )
-      })),
+      deleteFolder: (id) => set((state) => {
+        // 递归获取所有子文件夹ID
+        const getSubFolderIds = (folderId) => {
+          const subFolders = state.folders.filter(f => f.parentId === folderId);
+          return [folderId, ...subFolders.flatMap(f => getSubFolderIds(f.id))];
+        };
+        
+        const folderIdsToDelete = getSubFolderIds(id);
+        
+        return {
+          folders: state.folders.filter(folder => !folderIdsToDelete.includes(folder.id)),
+          notes: state.notes.map(note => 
+            folderIdsToDelete.includes(note.folderId) 
+              ? { ...note, folderId: 'root' } 
+              : note
+          ),
+          activeFolder: state.activeFolder === id ? 'root' : state.activeFolder
+        };
+      }),
       
       deleteNote: (id) => set((state) => ({
         notes: state.notes.filter(note => note.id !== id),
@@ -57,7 +86,6 @@ export const useStore = create(
       
       sortNotes: (sortBy) => set((state) => {
         const sortedNotes = [...state.notes].sort((a, b) => {
-          // 置顶笔记始终在前
           if (a.pinned && !b.pinned) return -1;
           if (!a.pinned && b.pinned) return 1;
           
@@ -78,7 +106,7 @@ export const useStore = create(
       name: 'mindlite-storage',
       partialize: (state) => ({ 
         notes: state.notes,
-        categories: state.categories 
+        folders: state.folders 
       }),
     }
   )
