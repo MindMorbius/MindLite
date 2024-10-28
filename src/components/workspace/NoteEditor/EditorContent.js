@@ -33,7 +33,6 @@ export default function EditorContent({
     [updateNote]
   );
 
-  // 添加自动保存提示
   const handleSave = useCallback((id, updates) => {
     setSaveStatus('saving');
     try {
@@ -74,7 +73,13 @@ export default function EditorContent({
         <MarkmapView content={localContent} show={showMarkmap} />
       ) : isPreview ? (
         <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
-          <ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            rehypePlugins={[
+              rehypeHighlight,
+              rehypeRaw
+            ]}
+          >
             {localContent}
           </ReactMarkdown>
         </article>
