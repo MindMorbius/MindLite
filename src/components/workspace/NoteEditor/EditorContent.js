@@ -30,7 +30,7 @@ export default function EditorContent({
         updatedAt: new Date().toISOString()
       });
     }, 500),
-    []
+    [updateNote]
   );
 
   // 添加自动保存提示
@@ -75,10 +75,11 @@ export default function EditorContent({
       ) : isPreview ? (
         <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
           <ReactMarkdown 
-            children={localContent}
             remarkPlugins={[remarkGfm, remarkBreaks]}
             rehypePlugins={[rehypeHighlight, rehypeRaw]}
-          />
+          >
+            {localContent}
+          </ReactMarkdown>
         </article>
       ) : (
         <textarea

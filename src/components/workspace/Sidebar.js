@@ -1,7 +1,7 @@
 'use client';
 
 import useStore from '@/lib/store';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   PlusIcon,
   DocumentPlusIcon,
@@ -29,6 +29,20 @@ export default function Sidebar({ isOpen, onToggle }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('tree'); // 'tree' | 'list'
 
+  // Move handleNewNote definition before useEffect
+  const handleNewNote = () => {
+    const newNote = {
+      id: Date.now(),
+      title: '新建笔记',
+      content: '',
+      folderId: activeFolder,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastViewedAt: new Date().toISOString()
+    };
+    addNote(newNote);
+  };
+
   useEffect(() => {
     if (!activeNoteId && notes.length > 0) {
       const lastViewedNote = [...notes].sort((a, b) => {
@@ -44,20 +58,7 @@ export default function Sidebar({ isOpen, onToggle }) {
         handleNewNote();
       }
     }
-  }, []);
-
-  const handleNewNote = () => {
-    const newNote = {
-      id: Date.now(),
-      title: '新建笔记',
-      content: '',
-      folderId: activeFolder,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastViewedAt: new Date().toISOString()
-    };
-    addNote(newNote);
-  };
+  }, [activeNoteId, notes, setActiveNote, setActiveFolder, handleNewNote]);
 
   // 添加滑动手势
   const swipeHandlers = useSwipeable({
