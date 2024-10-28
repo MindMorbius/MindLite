@@ -74,17 +74,14 @@ export default function EditorContent({
         <MarkmapView content={localContent} show={showMarkmap} />
       ) : isPreview ? (
         <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
-          <ReactMarkdown 
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            rehypePlugins={[rehypeHighlight, rehypeRaw]}
-          >
+          <ReactMarkdown>
             {localContent}
           </ReactMarkdown>
         </article>
       ) : (
         <textarea
           placeholder="开始输入..."
-          className="w-full h-[calc(100vh-12rem)] sm:h-[calc(100vh-16rem)] md:h-[500px] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm"
+          className="w-full h-[calc(100vh-16rem)] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm overflow-auto"
           value={localContent}
           onChange={handleContentChange}
         />

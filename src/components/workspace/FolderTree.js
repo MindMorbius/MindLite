@@ -90,19 +90,49 @@ function NoteTreeItem({ note, active, onClick }) {
   );
 }
 
-// 添加 FolderActionButtons 组件
+// 修改 FolderActionButtons 组件
 function FolderActionButtons({ folder, onEdit, onDelete }) {
-  const { addFolder } = useStore();
+  const { addFolder, addNote } = useStore();
+
+  const handleNewNote = () => {
+    const newNote = {
+      id: Date.now(),
+      title: '新建笔记',
+      content: '',
+      folderId: folder.id, // 确保使用当前文件夹ID
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastViewedAt: new Date().toISOString()
+    };
+    addNote(newNote);
+  };
+
+  const handleNewSubFolder = () => {
+    const name = window.prompt('请输入文件夹名称');
+    if (name?.trim()) {
+      addFolder({ 
+        name: name.trim(), 
+        parentId: folder.id  // 使用当前文件夹ID作为父ID
+      });
+    }
+  };
 
   return (
     <>
       <button
         onClick={(e) => {
           e.stopPropagation();
-          const name = window.prompt('请输入子文件夹名称');
-          if (name?.trim()) {
-            addFolder({ name: name.trim(), parentId: folder.id });
-          }
+          handleNewNote();
+        }}
+        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+        title="新建笔记"
+      >
+        <PlusIcon className="w-3 h-3" />
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleNewSubFolder();
         }}
         className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
         title="新建子文件夹"

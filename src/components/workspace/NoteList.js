@@ -22,12 +22,10 @@ export default function NoteList({ searchTerm, onNoteClick, activeNoteId }) {
   // 过滤笔记
   const filteredNotes = notes
     .filter(note => {
-      const matchesSearch = searchTerm ? 
+      return searchTerm ? 
         note.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.content?.toLowerCase().includes(searchTerm.toLowerCase())
         : true;
-      const matchesFolder = note.folderId === activeFolder || activeFolder === 'root';
-      return matchesSearch && matchesFolder;
     })
     .sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;

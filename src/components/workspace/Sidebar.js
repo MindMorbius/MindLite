@@ -16,13 +16,57 @@ import FolderTree from '@/components/workspace/FolderTree';
 import NoteList from '@/components/workspace/NoteList';
 import { useSwipeable } from 'react-swipeable'; // 需要安装这个包
 
+// 新增 PinnedNotes 组件
+function PinnedNotes({ onNoteClick, activeNoteId }) {
+  const { notes, updateNote } = useStore();
+  const pinnedNotes = notes.filter(note => note.pinned);
+
+  if (pinnedNotes.length === 0) return null;
+
+  return (
+    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+      <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">置顶笔记</h3>
+      <div className="space-y-1">
+        {pinnedNotes.map(note => (
+          <div 
+            key={note.id}
+            className={`group relative flex items-center px-2 py-1.5 rounded-lg ${
+              note.id === activeNoteId 
+                ? 'bg-blue-50 dark:bg-blue-900/20' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <button
+              onClick={() => onNoteClick(note.id)}
+              className="flex-1 flex items-center space-x-2 text-left min-w-0"
+            >
+              <DocumentTextIcon className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm truncate">{note.title || '无标题'}</span>
+            </button>
+            <div className="opacity-0 group-hover:opacity-100 flex items-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateNote(note.id, { pinned: false });
+                }}
+                className="p-1.5 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                title="取消置顶"
+              >
+                <PinIcon className="w-3.5 h-3.5 fill-current" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar({ isOpen, onToggle }) {
   const { 
     notes, 
-    activeNoteId, 
-    activeFolder,
+    activeNoteId,
     setActiveNote,
-    setActiveFolder,
     addNote
   } = useStore();
   
@@ -35,7 +79,7 @@ export default function Sidebar({ isOpen, onToggle }) {
       id: Date.now(),
       title: '新建笔记',
       content: '',
-      folderId: activeFolder,
+      folderId: 'root',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       lastViewedAt: new Date().toISOString()
@@ -53,12 +97,11 @@ export default function Sidebar({ isOpen, onToggle }) {
 
       if (lastViewedNote) {
         setActiveNote(lastViewedNote.id);
-        setActiveFolder(lastViewedNote.folderId || 'root');
       } else {
         handleNewNote();
       }
     }
-  }, [activeNoteId, notes, setActiveNote, setActiveFolder, handleNewNote]);
+  }, [activeNoteId, notes, setActiveNote, handleNewNote]);
 
   // 添加滑动手势
   const swipeHandlers = useSwipeable({
@@ -130,6 +173,12 @@ export default function Sidebar({ isOpen, onToggle }) {
             <MagnifyingGlassIcon className="absolute left-2.5 top-2 w-4 h-4 text-gray-400" />
           </div>
         </div>
+
+        {/* 添加置顶笔记列表 */}
+        <PinnedNotes 
+          onNoteClick={setActiveNote}
+          activeNoteId={activeNoteId}
+        />
 
         {/* 主内容区 */}
         <div className="flex-1 overflow-hidden">

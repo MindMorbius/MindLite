@@ -7,7 +7,6 @@ export const useStore = create(
       notes: [],
       folders: [{ id: 'root', name: '所有笔记', parentId: null }],
       activeNoteId: null,
-      activeFolder: 'root',
       
       setActiveNote: (id) => set((state) => {
         if (!id) return { activeNoteId: null };
@@ -21,8 +20,6 @@ export const useStore = create(
         };
       }),
       
-      setActiveFolder: (id) => set({ activeFolder: id }),
-      
       addFolder: ({ name, parentId = null }) => set((state) => ({
         folders: [...state.folders, {
           id: Date.now().toString(),
@@ -31,17 +28,27 @@ export const useStore = create(
         }]
       })),
       
-      addNote: (note) => set((state) => ({ 
-        notes: [...state.notes, {
-          ...note,
-          // 只有当 activeFolder 不是 root 时才设置 folderId
-          folderId: state.activeFolder === 'root' ? null : state.activeFolder,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          lastViewedAt: new Date().toISOString()
-        }],
-        activeNoteId: note.id 
-      })),
+      addNote: (note) => set((state) => {
+        // 检查重名并添加后缀
+        let title = note.title;
+        let counter = 1;
+        while (state.notes.some(n => n.title === title)) {
+          counter++;
+          title = `${note.title} #${counter}`;
+        }
+
+        return { 
+          notes: [...state.notes, {
+            ...note,
+            title,
+            folderId: note.folderId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastViewedAt: new Date().toISOString()
+          }],
+          activeNoteId: note.id 
+        };
+      }),
       
       updateNote: (id, updates) => set((state) => ({
         notes: state.notes.map(note => 
@@ -74,8 +81,7 @@ export const useStore = create(
             folderIdsToDelete.includes(note.folderId) 
               ? { ...note, folderId: 'root' } 
               : note
-          ),
-          activeFolder: state.activeFolder === id ? 'root' : state.activeFolder
+          )
         };
       }),
       
