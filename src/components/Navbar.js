@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
+import ThemeToggle from './ThemeToggle';
 export default function Navbar() {
   const [stars, setStars] = useState(null);
 
@@ -47,6 +47,7 @@ export default function Navbar() {
           {/* GitHub Button - 始终显示 */}
           <div className="flex items-center">
             <GitHubButton />
+            <ThemeToggle />
           </div>
         </div>
       </div>

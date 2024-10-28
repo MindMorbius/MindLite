@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '@/lib/store';
 import { 
   FolderIcon,
@@ -20,8 +20,8 @@ function NoteTreeItem({ note, active, onClick }) {
   const { deleteNote, updateNote, folders } = useStore();
   const [showMoveModal, setShowMoveModal] = useState(false);
 
-  const handleMove = (folderId) => {
-    updateNote(note.id, { folderId });
+  const handleMove = (newPath) => {
+    updateNote(note.id, { path: newPath });
     setShowMoveModal(false);
   };
 
@@ -96,10 +96,10 @@ function FolderActionButtons({ folder, onEdit, onDelete }) {
 
   const handleNewNote = () => {
     const newNote = {
-      id: Date.now(),
+      id: Date.now().toString(),
       title: '新建笔记',
       content: '',
-      folderId: folder.id, // 确保使用当前文件夹ID
+      path: folder.path,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       lastViewedAt: new Date().toISOString()
@@ -112,7 +112,7 @@ function FolderActionButtons({ folder, onEdit, onDelete }) {
     if (name?.trim()) {
       addFolder({ 
         name: name.trim(), 
-        parentId: folder.id  // 使用当前文件夹ID作为父ID
+        parentPath: folder.path
       });
     }
   };
@@ -172,25 +172,23 @@ function MoveNoteModal({ note, folders, onMove, onClose }) {
       <div className="fixed inset-0" onClick={onClose} />
       <div className="absolute right-0 top-8 z-50 w-48 py-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
         <button
-          onClick={() => onMove(null)}
+          onClick={() => onMove('/')}
           className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
         >
           <DocumentTextIcon className="w-4 h-4" />
           <span>移至根目录</span>
         </button>
         <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-        {folders
-          .filter(f => f.id !== 'root')
-          .map(folder => (
-            <button
-              key={folder.id}
-              onClick={() => onMove(folder.id)}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-            >
-              <FolderIcon className="w-4 h-4" />
-              <span>{folder.name}</span>
-            </button>
-          ))}
+        {folders.map(folder => (
+          <button
+            key={folder.path}
+            onClick={() => onMove(folder.path)}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+          >
+            <FolderIcon className="w-4 h-4" />
+            <span>{folder.name}</span>
+          </button>
+        ))}
       </div>
     </>
   );
@@ -198,32 +196,56 @@ function MoveNoteModal({ note, folders, onMove, onClose }) {
 
 export default function FolderTree({ searchTerm, onNoteClick, activeNoteId }) {
   const { folders, notes, addFolder, updateFolder, deleteFolder } = useStore();
-  const [expandedFolders, setExpandedFolders] = useState(new Set(['root']));
-  const [editingId, setEditingId] = useState(null);
+  const [expandedPaths, setExpandedPaths] = useState(new Set(['/']));
+  const [editingPath, setEditingPath] = useState(null);
   const [newFolderName, setNewFolderName] = useState('');
 
-  const toggleFolder = (folderId) => {
-    const newExpanded = new Set(expandedFolders);
-    if (newExpanded.has(folderId)) {
-      newExpanded.delete(folderId);
+  // 使用 useMemo 优化文件夹和笔记的过滤和排序
+  const filteredFolders = useMemo(() => 
+    folders.filter(f => f.path.split('/').length === 2),
+    [folders]
+  );
+
+  const filteredNotes = useMemo(() => 
+    notes
+      .filter(n => {
+        if (searchTerm) {
+          return n.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 n.content?.toLowerCase().includes(searchTerm.toLowerCase());
+        }
+        return n.path === '/';
+      })
+      .sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      }),
+    [notes, searchTerm]
+  );
+
+  const toggleFolder = (path) => {
+    const newExpanded = new Set(expandedPaths);
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path);
     } else {
-      newExpanded.add(folderId);
+      newExpanded.add(path);
     }
-    setExpandedFolders(newExpanded);
+    setExpandedPaths(newExpanded);
   };
 
-  const renderFolderContents = (folderId) => {
-    const subFolders = folders.filter(f => f.parentId === folderId);
+  const renderFolderContents = (path) => {
+    const subFolders = folders.filter(f => {
+      const parentPath = f.path.substring(0, f.path.lastIndexOf('/'));
+      return parentPath === path;
+    });
+    
     const folderNotes = notes
       .filter(n => {
         if (searchTerm) {
           return n.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                  n.content?.toLowerCase().includes(searchTerm.toLowerCase());
         }
-        if (folderId === 'root') {
-          return !n.folderId || n.folderId === 'root';
-        }
-        return n.folderId === folderId;
+        return n.path === path;
       })
       .sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
@@ -247,29 +269,29 @@ export default function FolderTree({ searchTerm, onNoteClick, activeNoteId }) {
   };
 
   const renderFolder = (folder) => {
-    const isExpanded = expandedFolders.has(folder.id);
+    const isExpanded = expandedPaths.has(folder.path);
     
     return (
-      <div key={folder.id}>
+      <div key={folder.path}>
         <div className="group flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
           <button
-            onClick={() => toggleFolder(folder.id)}
+            onClick={() => toggleFolder(folder.path)}
             className="p-1"
           >
             <ChevronRightIcon className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
           </button>
           <div className="flex-1 flex items-center py-1">
             <FolderIcon className="w-4 h-4 mx-1" />
-            {editingId === folder.id ? (
+            {editingPath === folder.path ? (
               <input
                 type="text"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 onBlur={() => {
                   if (newFolderName.trim()) {
-                    updateFolder(folder.id, { name: newFolderName.trim() });
+                    updateFolder(folder.path, { name: newFolderName.trim() });
                   }
-                  setEditingId(null);
+                  setEditingPath(null);
                 }}
                 className="flex-1 px-2 py-0.5 text-sm bg-gray-100 dark:bg-gray-700 rounded"
                 autoFocus
@@ -278,20 +300,20 @@ export default function FolderTree({ searchTerm, onNoteClick, activeNoteId }) {
               <span className="flex-1 px-2 text-sm">{folder.name}</span>
             )}
           </div>
-          {folder.id !== 'root' && (
+          {folder.path !== '/' && (
             <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 pr-2">
               <FolderActionButtons 
                 folder={folder}
                 onEdit={() => {
-                  setEditingId(folder.id);
+                  setEditingPath(folder.path);
                   setNewFolderName(folder.name);
                 }}
-                onDelete={() => deleteFolder(folder.id)}
+                onDelete={() => deleteFolder(folder.path)}
               />
             </div>
           )}
         </div>
-        {isExpanded && renderFolderContents(folder.id)}
+        {isExpanded && renderFolderContents(folder.path)}
       </div>
     );
   };
@@ -303,7 +325,7 @@ export default function FolderTree({ searchTerm, onNoteClick, activeNoteId }) {
           onClick={() => {
             const name = window.prompt('请输入文件夹名称');
             if (name?.trim()) {
-              addFolder({ name: name.trim(), parentId: 'root' });
+              addFolder({ name: name.trim(), parentPath: '/' });
             }
           }}
           size="sm"
@@ -314,30 +336,16 @@ export default function FolderTree({ searchTerm, onNoteClick, activeNoteId }) {
         </Button>
       </div>
       
-      {/* 直接渲染根目录内容，不显示root文件夹本身 */}
       <div className="space-y-1">
-        {folders.filter(f => f.parentId === 'root').map(folder => renderFolder(folder))}
-        {notes
-          .filter(n => {
-            if (searchTerm) {
-              return n.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     n.content?.toLowerCase().includes(searchTerm.toLowerCase());
-            }
-            return !n.folderId || n.folderId === 'root';
-          })
-          .sort((a, b) => {
-            if (a.pinned && !b.pinned) return -1;
-            if (!a.pinned && b.pinned) return 1;
-            return new Date(b.updatedAt) - new Date(a.updatedAt);
-          })
-          .map(note => (
-            <NoteTreeItem 
-              key={note.id}
-              note={note}
-              active={note.id === activeNoteId}
-              onClick={() => onNoteClick(note.id)}
-            />
-          ))}
+        {filteredFolders.map(folder => renderFolder(folder))}
+        {filteredNotes.map(note => (
+          <NoteTreeItem 
+            key={note.id}
+            note={note}
+            active={note.id === activeNoteId}
+            onClick={() => onNoteClick(note.id)}
+          />
+        ))}
       </div>
     </div>
   );

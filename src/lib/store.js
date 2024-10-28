@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const ROOT_PATH = '/';
+const QUICK_NOTES_PATH = '/速记';
+
 export const useStore = create(
   persist(
     (set) => ({
       notes: [],
-      folders: [{ id: 'root', name: '所有笔记', parentId: null }],
+      folders: [
+        { id: QUICK_NOTES_PATH, name: '速记', path: QUICK_NOTES_PATH }
+      ],
       activeNoteId: null,
       
       setActiveNote: (id) => set((state) => {
@@ -20,16 +25,18 @@ export const useStore = create(
         };
       }),
       
-      addFolder: ({ name, parentId = null }) => set((state) => ({
-        folders: [...state.folders, {
-          id: Date.now().toString(),
-          name,
-          parentId
-        }]
-      })),
+      addFolder: ({ name, parentPath = ROOT_PATH }) => set((state) => {
+        const newPath = parentPath === ROOT_PATH ? `/${name}` : `${parentPath}/${name}`;
+        return {
+          folders: [...state.folders, {
+            id: newPath,
+            name,
+            path: newPath
+          }]
+        };
+      }),
       
       addNote: (note) => set((state) => {
-        // 检查重名并添加后缀
         let title = note.title;
         let counter = 1;
         while (state.notes.some(n => n.title === title)) {
@@ -41,7 +48,7 @@ export const useStore = create(
           notes: [...state.notes, {
             ...note,
             title,
-            folderId: note.folderId,
+            path: note.path || ROOT_PATH,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             lastViewedAt: new Date().toISOString()
@@ -66,24 +73,14 @@ export const useStore = create(
         )
       })),
       
-      deleteFolder: (id) => set((state) => {
-        // 递归获取所有子文件夹ID
-        const getSubFolderIds = (folderId) => {
-          const subFolders = state.folders.filter(f => f.parentId === folderId);
-          return [folderId, ...subFolders.flatMap(f => getSubFolderIds(f.id))];
-        };
-        
-        const folderIdsToDelete = getSubFolderIds(id);
-        
-        return {
-          folders: state.folders.filter(folder => !folderIdsToDelete.includes(folder.id)),
-          notes: state.notes.map(note => 
-            folderIdsToDelete.includes(note.folderId) 
-              ? { ...note, folderId: 'root' } 
-              : note
-          )
-        };
-      }),
+      deleteFolder: (path) => set((state) => ({
+        folders: state.folders.filter(folder => !folder.path.startsWith(path)),
+        notes: state.notes.map(note => 
+          note.path.startsWith(path) 
+            ? { ...note, path: ROOT_PATH }
+            : note
+        )
+      })),
       
       deleteNote: (id) => set((state) => ({
         notes: state.notes.filter(note => note.id !== id),
@@ -106,6 +103,38 @@ export const useStore = create(
           }
         });
         return { notes: sortedNotes };
+      }),
+      
+      addQuickNote: () => set((state) => {
+        const now = new Date();
+        const id = now.getTime().toString();
+        const formattedDate = now.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        // 确保速记文件夹存在
+        const folders = state.folders.some(f => f.path === QUICK_NOTES_PATH)
+          ? state.folders
+          : [...state.folders, { id: QUICK_NOTES_PATH, name: '速记', path: QUICK_NOTES_PATH }];
+
+        return { 
+          folders,
+          notes: [...state.notes, {
+            id,
+            title: `速记 ${formattedDate}`,
+            content: `---\n创建时间: ${formattedDate}\n类型: 速记\n---\n\n`,
+            path: QUICK_NOTES_PATH,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+            lastViewedAt: now.toISOString()
+          }],
+          activeNoteId: id
+        };
       }),
     }),
     {

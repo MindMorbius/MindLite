@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
-import SearchPanel from './SearchPanel';
 import { useState } from 'react';
 import { 
   Bars3Icon as MenuIcon, 
@@ -10,35 +9,48 @@ import {
   ChevronDownIcon,
   ShareIcon,
   Cog6ToothIcon as SettingsIcon,
-  HomeIcon
+  HomeIcon,
+  PlusIcon
 } from '@heroicons/react/24/solid';
 import Button from '@/components/ui/Button';
 import { Menu } from '@headlessui/react';
+import { useStore } from '@/lib/store';
 
 export default function WorkspaceNav({ onMenuClick }) {
-  const [showSearch, setShowSearch] = useState(false);
+  const { notes, addQuickNote } = useStore();
+  
+  const totalNotes = notes.length;
+  const quickNotes = notes.filter(note => note.path === '/速记').length;
+  const pinnedNotes = notes.filter(note => note.pinned).length;
 
   return (
     <nav className="h-14 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <div className="h-full px-2 md:px-4 flex items-center justify-between">
-        {/* 左侧菜单按钮和搜索 */}
+        {/* 左侧区域 */}
         <div className="flex items-center space-x-2 md:space-x-4">
-          <Button onClick={onMenuClick} size="sm" className="md:hidden">
+          <Button 
+            onClick={onMenuClick} 
+            size="sm" 
+            variant="ghost" 
+            className="md:hidden"
+          >
             <MenuIcon className="w-5 h-5" />
           </Button>
-          <Button onClick={() => setShowSearch(!showSearch)} size="sm">
-            <SearchIcon className="w-5 h-5" />
+          <Button 
+            onClick={addQuickNote} 
+            size="sm" 
+            variant="primary"
+            className="min-w-[80px] flex items-center justify-center"
+          >
+            <PlusIcon className="w-5 h-5 mr-1" />
+            <span>速记</span>
           </Button>
-          <div className="hidden md:flex items-center space-x-2">
-            <span className="text-sm text-gray-600 dark:text-gray-300">最近编辑</span>
-            <Button size="sm">
-              <ChevronDownIcon className="w-4 h-4" />
-            </Button>
+          <div className="hidden md:flex items-center divide-x divide-gray-200 dark:divide-gray-700">
+            <span className="px-3 text-sm text-gray-600 dark:text-gray-300">笔记: {totalNotes}</span>
+            <span className="px-3 text-sm text-gray-600 dark:text-gray-300">速记: {quickNotes}</span>
+            <span className="px-3 text-sm text-gray-600 dark:text-gray-300">置顶: {pinnedNotes}</span>
           </div>
         </div>
-        
-        {/* 搜索面板 */}
-        <SearchPanel show={showSearch} onClose={() => setShowSearch(false)} />
         
         {/* 右侧按钮 */}
         <div className="flex items-center space-x-2">
