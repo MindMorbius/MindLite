@@ -12,7 +12,7 @@ export default function EditorPreview({ localTitle, localContent }) {
         {localTitle || '无标题'}
       </div>
       <div className="h-[calc(100vh-16rem)] overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-400">
-        <article className="w-full prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
+        <article className="w-full max-w-[calc(100vw-3rem)] prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:overflow-x-auto max-w-none px-2 [overflow-wrap:anywhere] [word-wrap:anywhere] overflow-x-auto [&_svg]:max-w-full [&_svg]:w-full [&_svg]:overflow-x-auto">
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkBreaks]}
             rehypePlugins={[rehypeHighlight, rehypeRaw]}
