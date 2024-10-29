@@ -1,14 +1,12 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { debounce } from 'lodash';
 import EditorToolbar from './EditorToolbar';
 import EditorStatusBar from './EditorStatusBar';
 import EmptyState from '../EmptyState';
-import EditorInput from './EditorInput';
-import EditorPreview from './EditorPreview';
-import MarkmapView from './markmap';
+import EditorContent from './EditorContent';
 
 export default function NoteEditor() {
   const { notes, activeNoteId, updateNote } = useStore();
@@ -19,6 +17,7 @@ export default function NoteEditor() {
   const [showMarkmap, setShowMarkmap] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved');
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [layoutMode, setLayoutMode] = useState('edit');
 
   // 当活动笔记改变时更新本地状态
   useEffect(() => {
@@ -68,32 +67,6 @@ export default function NoteEditor() {
     }
   };
 
-  const renderEditorContent = () => {
-    if (showMarkmap) {
-      return <MarkmapView content={localContent} show={showMarkmap} />;
-    }
-
-    if (isPreview) {
-      return (
-        <EditorPreview
-          localTitle={localTitle}
-          localContent={localContent}
-        />
-      );
-    }
-
-    return (
-      <EditorInput
-        localTitle={localTitle}
-        setLocalTitle={setLocalTitle}
-        localContent={localContent}
-        setLocalContent={setLocalContent}
-        handleTitleChange={handleTitleChange}
-        handleContentChange={handleContentChange}
-      />
-    );
-  };
-
   // 如果没有笔记，显示空状态
   if (notes.length === 0) {
     return (
@@ -105,33 +78,39 @@ export default function NoteEditor() {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-      {/* 固定的工具栏 */}
+      {/* 工具栏区域 */}
       <div className="flex-none border-b border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4">
-          <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
-            <EditorToolbar 
-              isPreview={isPreview}
-              setIsPreview={setIsPreview}
-              showMarkmap={showMarkmap}
-              setShowMarkmap={setShowMarkmap}
-              isTranscribing={isTranscribing}
-              setIsTranscribing={setIsTranscribing}
-              className="self-end sm:self-auto"
-            />
-            <EditorStatusBar 
-              activeNote={activeNote} 
-              localContent={localContent}
-              saveStatus={saveStatus} 
-              className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 self-end sm:self-auto sm:ml-auto"
-            />
-          </div>
+        <div className="flex flex-col p-3 sm:p-4 gap-3">
+          <EditorToolbar 
+            layoutMode={layoutMode}
+            setLayoutMode={setLayoutMode}
+            showMarkmap={showMarkmap}
+            setShowMarkmap={setShowMarkmap}
+            isTranscribing={isTranscribing}
+            setIsTranscribing={setIsTranscribing}
+          />
+          <EditorStatusBar 
+            activeNote={activeNote} 
+            localContent={localContent}
+            saveStatus={saveStatus} 
+            className="text-xs sm:text-sm text-gray-500 dark:text-gray-400"
+          />
         </div>
       </div>
 
-      {/* 内容区域 - 只有这里可以滚动 */}
+      {/* 内容区域 */}
       <div className="flex-1 overflow-auto">
         <div className="p-3 sm:p-4">
-          {renderEditorContent()}
+          <EditorContent
+            layoutMode={layoutMode}
+            showMarkmap={showMarkmap}
+            localTitle={localTitle}
+            localContent={localContent}
+            setLocalTitle={setLocalTitle}
+            setLocalContent={setLocalContent}
+            handleTitleChange={handleTitleChange}
+            handleContentChange={handleContentChange}
+          />
         </div>
       </div>
     </div>
