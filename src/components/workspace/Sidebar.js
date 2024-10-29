@@ -152,7 +152,7 @@ export default function Sidebar({ isOpen, onToggle }) {
               {viewMode === 'tree' ? '列表' : '树状'}
             </Button>
             <button 
-              onClick={onToggle}
+              onClick={() => onToggle(false)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg md:hidden"
             >
               <MenuIcon className="w-5 h-5" />
