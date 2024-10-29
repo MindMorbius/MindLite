@@ -72,21 +72,20 @@ export default function EditorContent({
       {showMarkmap ? (
         <MarkmapView content={localContent} show={showMarkmap} />
       ) : isPreview ? (
-        <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            rehypePlugins={[
-              rehypeHighlight,
-              rehypeRaw
-            ]}
-          >
-            {localContent}
-          </ReactMarkdown>
-        </article>
+        <div className="h-[calc(100vh-16rem)] overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-400">
+          <article className="prose prose-slate dark:prose-invert prose-pre:bg-gray-900 prose-pre:text-gray-100 max-w-none px-2">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              rehypePlugins={[rehypeHighlight, rehypeRaw]}
+            >
+              {localContent}
+            </ReactMarkdown>
+          </article>
+        </div>
       ) : (
         <textarea
           placeholder="开始输入..."
-          className="w-full h-[calc(100vh-16rem)] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm overflow-auto"
+          className="w-full h-[calc(100vh-16rem)] p-2 bg-transparent border-none outline-none resize-none font-mono text-sm overflow-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-500 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-400"
           value={localContent}
           onChange={handleContentChange}
         />

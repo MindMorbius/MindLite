@@ -38,9 +38,9 @@ export default function NoteEditor() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm min-h-[calc(100vh-8rem)] md:min-h-[600px] flex flex-col">
-      {/* 固定的工具栏和状态栏 */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      {/* 固定的工具栏 */}
+      <div className="flex-none border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 sm:p-4">
           <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
             <EditorToolbar 
@@ -62,17 +62,19 @@ export default function NoteEditor() {
         </div>
       </div>
 
-      {/* 内容区域 */}
-      <div className="flex-1 p-3 sm:p-4 overflow-auto">
-        <EditorContent 
-          localTitle={localTitle}
-          setLocalTitle={setLocalTitle}
-          localContent={localContent}
-          setLocalContent={setLocalContent}
-          isPreview={isPreview}
-          showMarkmap={showMarkmap}
-          setSaveStatus={setSaveStatus}
-        />
+      {/* 内容区域 - 只有这里可以滚动 */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-3 sm:p-4">
+          <EditorContent 
+            localTitle={localTitle}
+            setLocalTitle={setLocalTitle}
+            localContent={localContent}
+            setLocalContent={setLocalContent}
+            isPreview={isPreview}
+            showMarkmap={showMarkmap}
+            setSaveStatus={setSaveStatus}
+          />
+        </div>
       </div>
     </div>
   );

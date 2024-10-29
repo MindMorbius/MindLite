@@ -26,15 +26,15 @@ export default function WorkspaceLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       <Suspense fallback={<div className="w-64 animate-pulse bg-gray-50 dark:bg-gray-800" />}>
         <Sidebar isOpen={sidebarOpen} onToggle={setSidebarOpen} />
       </Suspense>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         <WorkspaceNav onMenuClick={() => setSidebarOpen(v => !v)} />
-        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
-          <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-4xl">
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900">
+          <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-4xl h-full">
             <Suspense fallback={<EditorSkeleton />}>
               <NoteEditor />
             </Suspense>
