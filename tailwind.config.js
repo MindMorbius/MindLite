@@ -195,13 +195,6 @@ module.exports = {
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
               },
             },
-            // Markmap 样式
-            '.markmap': {
-              '--mm-spacing-h': '100px',
-              '--mm-spacing-v': '30px',
-              '--mm-font-size': '16px',
-              '--mm-root-size': '20px',
-            }
           },
         },
       },
@@ -209,46 +202,6 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/typography'),
-    function({ addComponents }) {
-      addComponents({
-        '.markmap-svg': {
-          '@apply w-full h-full': {},
-          '& .markmap-link': {
-            '@apply stroke-gray-400 dark:stroke-gray-400': {}, // 更亮的连线
-            'stroke-width': '3px',  // 更粗的连线
-            'stroke-opacity': '0.8', // 更高的不透明度
-          },
-          '& .markmap-node > circle': {
-            '@apply fill-blue-500 dark:fill-blue-400': {},
-            '@apply opacity-30 dark:opacity-40': {}, // 更高的不透明度
-          },
-          '& .markmap-node > text': {
-            '@apply font-sans text-lg text-gray-900 dark:text-gray-100': {}, // 更大的字体
-            '@apply font-medium tracking-wide': {}, // 更好的字体效果
-            'text-shadow': '0 1px 2px rgba(0,0,0,0.1)', // 文字阴影
-          },
-          '& .markmap-node.root > text': {
-            '@apply text-2xl font-bold text-gray-900 dark:text-white': {}, // 更大的根节点文字
-          },
-          '& .markmap-node.root > circle': {
-            '@apply fill-blue-600 dark:fill-blue-500': {},
-            '@apply opacity-40 dark:opacity-50': {},
-            'r': '8px', // 更大的根节点圆圈
-          },
-        },
-        '.markmap-toolbar': {
-          '@apply fixed right-8 top-8 z-50': {}, // 固定位置
-          '@apply bg-white/90 dark:bg-gray-800/90 backdrop-blur': {}, // 半透明背景
-          '@apply shadow-lg rounded-lg border border-gray-200 dark:border-gray-700': {},
-          '@apply p-2': {},
-          '& button': {
-            '@apply text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400': {},
-            '@apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700': {},
-            '@apply transition-colors': {},
-          },
-        },
-      });
-    },
     require('tailwind-scrollbar'),
   ],
 };

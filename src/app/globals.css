@@ -20,7 +20,7 @@ body {
 }
 
 /* 只保留滚动条样式 */
-textarea {
+/* textarea {
   scrollbar-width: thin;
   scrollbar-color: theme('colors.gray.300') transparent;
 }
@@ -40,4 +40,4 @@ textarea::-webkit-scrollbar-thumb {
 
 .dark textarea::-webkit-scrollbar-thumb {
   background-color: theme('colors.gray.700');
-}
+} */
