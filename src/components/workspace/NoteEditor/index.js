@@ -1,14 +1,17 @@
 'use client';
 
 import { useStore } from '@/lib/store';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { debounce } from 'lodash';
 import EditorToolbar from './EditorToolbar';
-import EditorContent from './EditorContent';
 import EditorStatusBar from './EditorStatusBar';
 import EmptyState from '../EmptyState';
+import EditorInput from './EditorInput';
+import EditorPreview from './EditorPreview';
+import MarkmapView from './markmap';
 
 export default function NoteEditor() {
-  const { notes, activeNoteId } = useStore();
+  const { notes, activeNoteId, updateNote } = useStore();
   const activeNote = notes.find(note => note.id === activeNoteId);
   const [localTitle, setLocalTitle] = useState('');
   const [localContent, setLocalContent] = useState('');
@@ -27,6 +30,69 @@ export default function NoteEditor() {
       setLocalContent('');
     }
   }, [activeNote]);
+
+  // 优化防抖保存
+  const debouncedSave = useCallback(
+    debounce((id, updates) => {
+      updateNote(id, {
+        ...updates,
+        updatedAt: new Date().toISOString()
+      });
+    }, 500),
+    [updateNote]
+  );
+
+  const handleSave = useCallback((id, updates) => {
+    setSaveStatus('saving');
+    try {
+      debouncedSave(id, updates);
+      setTimeout(() => setSaveStatus('saved'), 1000);
+    } catch (error) {
+      setSaveStatus('error');
+    }
+  }, [debouncedSave]);
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setLocalTitle(newTitle);
+    if (activeNoteId) {
+      handleSave(activeNoteId, { title: newTitle });
+    }
+  };
+
+  const handleContentChange = (e) => {
+    const newContent = e.target.value;
+    setLocalContent(newContent);
+    if (activeNoteId) {
+      handleSave(activeNoteId, { content: newContent });
+    }
+  };
+
+  const renderEditorContent = () => {
+    if (showMarkmap) {
+      return <MarkmapView content={localContent} show={showMarkmap} />;
+    }
+
+    if (isPreview) {
+      return (
+        <EditorPreview
+          localTitle={localTitle}
+          localContent={localContent}
+        />
+      );
+    }
+
+    return (
+      <EditorInput
+        localTitle={localTitle}
+        setLocalTitle={setLocalTitle}
+        localContent={localContent}
+        setLocalContent={setLocalContent}
+        handleTitleChange={handleTitleChange}
+        handleContentChange={handleContentChange}
+      />
+    );
+  };
 
   // 如果没有笔记，显示空状态
   if (notes.length === 0) {
@@ -65,15 +131,7 @@ export default function NoteEditor() {
       {/* 内容区域 - 只有这里可以滚动 */}
       <div className="flex-1 overflow-auto">
         <div className="p-3 sm:p-4">
-          <EditorContent 
-            localTitle={localTitle}
-            setLocalTitle={setLocalTitle}
-            localContent={localContent}
-            setLocalContent={setLocalContent}
-            isPreview={isPreview}
-            showMarkmap={showMarkmap}
-            setSaveStatus={setSaveStatus}
-          />
+          {renderEditorContent()}
         </div>
       </div>
     </div>
