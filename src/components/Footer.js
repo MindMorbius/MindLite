@@ -31,13 +31,10 @@ function WeatherWidget() {
   const [weather, setWeather] = useState(null);
   
   useEffect(() => {
-    fetch('https://uapis.cn/api/weather?name=北京市')
+    fetch('/api/weather')
       .then(res => res.json())
-      .then(data => {
-        if (data.code === 200) {
-          setWeather(data);
-        }
-      });
+      .then(setWeather)
+      .catch(console.error);
   }, []);
 
   return (
@@ -60,9 +57,10 @@ function QuoteWidget() {
   const [quote, setQuote] = useState('');
 
   useEffect(() => {
-    fetch('https://uapis.cn/api/say')
+    fetch('/api/quote')
       .then(res => res.text())
-      .then(data => setQuote(data));
+      .then(setQuote)
+      .catch(console.error);
   }, []);
 
   return (
@@ -79,12 +77,10 @@ function QuoteWidget() {
 
 function GithubTrends() {
   const [activities, setActivities] = useState([]);
+  
   useEffect(() => {
-    fetch('https://api.github.com/users/MindMorbius/events?per_page=15')
-      .then(res => {
-        if (!res.ok) throw new Error('GitHub API 请求失败');
-        return res.json();
-      })
+    fetch('/api/github/events')
+      .then(res => res.json())
       .then(data => {
         // 按仓库分组
         const groupedByRepo = data.reduce((acc, curr) => {
@@ -180,7 +176,7 @@ function GithubTrends() {
 
   return (
     <CardWrapper>
-      <h3 className="text-sm sm:text-lg font-bold mb-2">最近活动</h3>
+      <h3 className="text-sm sm:text-lg font-bold mb-2">MindMorbius动态</h3>
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
         <ul className="space-y-2">
           {activities.map(activity => (

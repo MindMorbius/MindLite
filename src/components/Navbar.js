@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
+
 export default function Navbar() {
   const [stars, setStars] = useState(null);
 
   useEffect(() => {
-    fetch('https://api.github.com/repos/MindMorbius/MindLite')
+    fetch('/api/github/stars')
       .then(res => res.json())
       .then(data => {
         if (data.stargazers_count !== undefined) {
