@@ -175,25 +175,33 @@ export const AudioCard = ({
     }
 
     return (
-      <div className="flex flex-col items-center justify-center py-4">
+      <div className="flex flex-col items-center justify-center py-4 w-full">
         {error || initialError ? (
-          <div className="space-y-1 text-center">
-            <div className="text-red-400 text-sm">{error || initialError}</div>
-            <button
-              onClick={handleTranscribe}
-              disabled={status !== 'idle'}
-              className="px-2 py-0.5 text-xs bg-red-500/20 hover:bg-red-500/30 
-                text-red-400 rounded-full transition-colors disabled:opacity-50"
-            >
-              {status !== 'idle' ? '处理中...' : '重试转录'}
-            </button>
+          <div className="space-y-2 text-center w-full">
+            <div className="text-red-400 text-sm break-words">
+              {error || initialError}
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={handleTranscribe}
+                disabled={status !== 'idle'}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm 
+                  bg-red-500/20 hover:bg-red-500/30 text-red-400 
+                  rounded-full transition-colors disabled:opacity-50"
+              >
+                {getButtonContent()}
+              </button>
+              <div className="text-xs text-gray-500">
+                {getStatusDescription()}
+              </div>
+            </div>
           </div>
         ) : audio ? (
-          <div className="space-y-1 text-center">
+          <div className="flex flex-col items-center gap-2 w-full">
             <button
               onClick={handleTranscribe}
               disabled={status !== 'idle'}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
                 hover:bg-emerald-500/30 text-emerald-400 rounded-full 
                 transition-colors disabled:opacity-50"
             >
@@ -222,6 +230,17 @@ export const AudioCard = ({
               <>
                 <span>·</span>
                 <span>{formatFileSize(audio.blob.size)}</span>
+                {audio.metadata?.isAutoSaved && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-0.5 text-amber-500">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+                      </svg>
+                      自动保存
+                    </span>
+                  </>
+                )}
               </>
             )}
           </div>

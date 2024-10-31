@@ -13,10 +13,21 @@ export async function POST(request) {
     const response = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SILICONFLOW_API_KEY}`
+        'Authorization': `Bearer ${process.env.SILICONFLOW_API_KEY}`,
       },
       body: apiFormData,
     });
+
+    // 添加响应类型检查
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Invalid response type:', contentType, 'Response:', text);
+      return NextResponse.json(
+        { error: '服务器返回了非预期的响应格式' },
+        { status: 500 }
+      );
+    }
 
     const data = await response.json();
 

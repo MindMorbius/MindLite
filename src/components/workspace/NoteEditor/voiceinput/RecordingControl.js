@@ -187,6 +187,63 @@ export const RecordingControl = ({
     return () => clearInterval(interval);
   }, []);
 
+  // 添加保存录音的函数
+  const saveRecording = useCallback(async () => {
+    if (!recorderRef.current) return;
+    
+    return new Promise((resolve) => {
+      recorderRef.current.stopRecording(async () => {
+        const blob = await recorderRef.current.getBlob();
+        const id = Date.now();
+        
+        await audioStorage.store(id, blob, {
+          createdAt: id,
+          duration: recordingState.duration,
+          isAutoSaved: true
+        });
+        
+        streamRef.current?.getTracks().forEach(track => track.stop());
+        clearInterval(timerRef.current);
+        onRecordingComplete(id);
+        resolve(id);
+      });
+    });
+  }, [recordingState.duration, onRecordingComplete]);
+
+  // 添加页面关闭/隐藏处理
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const handleBeforeUnload = async (e) => {
+      if (isRecording) {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome requires returnValue to be set
+        await saveRecording();
+      }
+    };
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'hidden' && isRecording) {
+        await saveRecording();
+        setIsRecording(false);
+        setRecordingState({
+          duration: 0,
+          isPaused: false,
+          currentTime: 0,
+          waveformData: []
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isRecording, saveRecording]);
+
   return (
     <div className="flex flex-col gap-2">
       {/* 存储信息显示 */}
