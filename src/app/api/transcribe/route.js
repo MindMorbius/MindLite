@@ -10,14 +10,21 @@ export async function POST(request) {
     apiFormData.append('file', audioFile);
     apiFormData.append('model', 'FunAudioLLM/SenseVoiceSmall');
     
+    // 添加 AbortController 处理超时
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
     const response = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.SILICONFLOW_API_KEY}`,
       },
       body: apiFormData,
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+    
     // 添加响应类型检查
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
@@ -63,6 +70,14 @@ export async function POST(request) {
         );
     }
   } catch (error) {
+    // 处理超时错误
+    if (error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: '请求超时，请稍后重试' },
+        { status: 504 }
+      );
+    }
+    
     console.error('Transcription error:', error);
     return NextResponse.json(
       { error: error.message || '音频转录失败' },
