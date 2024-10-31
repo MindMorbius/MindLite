@@ -23,4 +23,22 @@ MindLite 是一款智能轻量级工具，让灵感不再停留在想象。它�
 ## 技术实现
 - JavaScript
 - Next.js 14
-- Sherpa-onnx WebAssembly (语音识别)
+
+## 构建进度
+
+### 语音转录模块
+
+#### 转录卡片
+- 音频模块布局
+- 交互卡片
+- 数据持久化
+  - 使用 IndexedDB 存储音频文件（wav blob）
+  - 使用 localStorage 存储卡片元数据
+  - 使用 Map 作为运行时缓存
+
+#### 转录能力
+- API实现
+- 本地化实现（测试失败，暂时废弃）
+  - 检测WebAssembly支持
+  - 制作模型缓存下载界面
+  - 集成sherpa-onnx模型

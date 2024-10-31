@@ -3,6 +3,7 @@ import MarkmapView from './markmap';
 import EditorInput from './EditorInput';
 import EditorPreview from './EditorPreview';
 import MarkdownToolbar from './MarkdownToolbar';
+import VoiceInput from './voiceinput';
 
 export default function EditorContent({
   layoutMode,
@@ -78,9 +79,17 @@ export default function EditorContent({
     return <MarkmapView content={localContent} show={showMarkmap} />;
   }
 
+  if (layoutMode === 'voice') {
+    return (
+      <div className="h-[calc(100vh-12rem)] md:h-[calc(100vh-16rem)] overflow-auto">
+        <VoiceInput />
+      </div>
+    );
+  }
+
   if (layoutMode === 'split') {
     return (
-      <div className={`flex flex-col md:flex-row h-[calc(100vh-16rem)]`}>
+      <div className="flex flex-col md:flex-row h-[calc(100vh-12rem)] md:h-[calc(100vh-16rem)]">
         <div className="h-[60vh] md:h-full">
           {renderEditor()}
         </div>
@@ -99,7 +108,7 @@ export default function EditorContent({
   }
 
   return (
-    <div className="h-[calc(100vh-16rem)]">
+    <div className="h-[calc(100vh-12rem)] md:h-[calc(100vh-16rem)]">
       {layoutMode === 'preview' ? renderPreview() : renderEditor()}
     </div>
   );

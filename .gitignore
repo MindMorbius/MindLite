@@ -38,3 +38,4 @@ next-env.d.ts
 .history
 package-lock.json
 .idea
+public/

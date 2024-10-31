@@ -77,7 +77,7 @@ export default function NoteEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm min-h-[calc(100vh-8rem)] md:min-h-[600px]">
       {/* 工具栏区域 */}
       <div className="flex-none border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col p-3 sm:p-4 gap-3">
@@ -99,8 +99,8 @@ export default function NoteEditor() {
       </div>
 
       {/* 内容区域 */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-3 sm:p-4">
+      <div className="flex-1 overflow-auto relative">
+        <div className="absolute inset-0 px-3 sm:px-4 pt-3 sm:pt-4">
           <EditorContent
             layoutMode={layoutMode}
             showMarkmap={showMarkmap}
