@@ -23,7 +23,15 @@ export const formatDuration = (seconds) => {
 };
 
 export const formatFileSize = (bytes) => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = Math.abs(bytes);
+  let unitIndex = 0;
+  
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  
+  // 小于 10 显示一位小数，大于等于 10 显示整数
+  return `${size < 10 ? size.toFixed(1) : Math.round(size)} ${units[unitIndex]}`;
 }; 

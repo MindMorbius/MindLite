@@ -15,16 +15,63 @@ export const AudioCard = ({
   const [transcription, setTranscription] = useState(initialTranscription);
   const [error, setError] = useState(initialError);
   const audio = audioStorage.get(id);
+  const [status, setStatus] = useState('idle'); // idle, converting, uploading, transcribing, error
+
+  const convertToWav = async (audioBlob) => {
+    const audioContext = new AudioContext();
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    const numberOfChannels = 1;
+    const length = audioBuffer.length * numberOfChannels * 2;
+    const buffer = new ArrayBuffer(44 + length);
+    const view = new DataView(buffer);
+    
+    const writeString = (view, offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + length, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numberOfChannels, true);
+    view.setUint32(24, audioBuffer.sampleRate, true);
+    view.setUint32(28, audioBuffer.sampleRate * 2, true);
+    view.setUint16(32, numberOfChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, length, true);
+
+    const samples = new Int16Array(buffer, 44, audioBuffer.length);
+    const channel = audioBuffer.getChannelData(0);
+    for (let i = 0; i < audioBuffer.length; i++) {
+      samples[i] = channel[i] < 0 ? channel[i] * 0x8000 : channel[i] * 0x7FFF;
+    }
+
+    return new Blob([buffer], { type: 'audio/wav' });
+  };
 
   const handleTranscribe = async (e) => {
     e.stopPropagation();
     setIsTranscribing(true);
     setError(null);
+    let wavUrl = null;
 
     try {
-      const formData = new FormData();
-      formData.append('file', audio.blob, 'audio.wav');
+      setStatus('converting');
+      const wavBlob = await convertToWav(audio.blob);
+      wavUrl = URL.createObjectURL(wavBlob);
       
+      setStatus('uploading');
+      const formData = new FormData();
+      formData.append('file', wavBlob, 'audio.wav');
+      
+      setStatus('transcribing');
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData
@@ -53,7 +100,68 @@ export const AudioCard = ({
       setError(errorMsg);
       onTranscriptionUpdate(id, { error: errorMsg });
     } finally {
+      if (wavUrl) {
+        URL.revokeObjectURL(wavUrl);
+      }
+      setStatus('idle');
       setIsTranscribing(false);
+    }
+  };
+
+  const getButtonContent = () => {
+    switch (status) {
+      case 'converting':
+        return (
+          <>
+            <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            转换音频格式...
+          </>
+        );
+      case 'uploading':
+        return (
+          <>
+            <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            上传音频...
+          </>
+        );
+      case 'transcribing':
+        return (
+          <>
+            <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            正在识别文字...
+          </>
+        );
+      default:
+        return (
+          <>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            开始转录
+          </>
+        );
+    }
+  };
+
+  const getStatusDescription = () => {
+    switch (status) {
+      case 'converting':
+        return '正在将音频转换为最佳格式...';
+      case 'uploading':
+        return '正在上传音频文件...';
+      case 'transcribing':
+        return '正在进行语音识别，请稍候...';
+      default:
+        return '点击开始将语音转为文字';
     }
   };
 
@@ -73,37 +181,28 @@ export const AudioCard = ({
             <div className="text-red-400 text-sm">{error || initialError}</div>
             <button
               onClick={handleTranscribe}
+              disabled={status !== 'idle'}
               className="px-2 py-0.5 text-xs bg-red-500/20 hover:bg-red-500/30 
-                text-red-400 rounded-full transition-colors"
+                text-red-400 rounded-full transition-colors disabled:opacity-50"
             >
-              重试转录
+              {status !== 'idle' ? '处理中...' : '重试转录'}
             </button>
           </div>
         ) : audio ? (
-          <button
-            onClick={handleTranscribe}
-            disabled={isTranscribing}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
-              hover:bg-emerald-500/30 text-emerald-400 rounded-full 
-              transition-colors disabled:opacity-50"
-          >
-            {isTranscribing ? (
-              <>
-                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                </svg>
-                转录中...
-              </>
-            ) : (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-                语音转录
-              </>
-            )}
-          </button>
+          <div className="space-y-1 text-center">
+            <button
+              onClick={handleTranscribe}
+              disabled={status !== 'idle'}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
+                hover:bg-emerald-500/30 text-emerald-400 rounded-full 
+                transition-colors disabled:opacity-50"
+            >
+              {getButtonContent()}
+            </button>
+            <div className="text-xs text-gray-500">
+              {getStatusDescription()}
+            </div>
+          </div>
         ) : null}
       </div>
     );
