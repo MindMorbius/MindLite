@@ -6,37 +6,57 @@
 - Storage: IndexedDB, PostgreSQL
 - AI: siliconflow API、bigmodel API
 
-### 数据存储
+### 数据存储架构
 
 #### 本地存储
-- Zustand 管理应用状态
-- IndexedDB 存储笔记和音频数据
-- 以笔记 UUID 为主键关联所有数据
+1. Zustand 状态管理
+   - 管理应用运行时状态
+   - 缓存活跃笔记数据
+   - 维护同步队列
+   - 以笔记 UUID 为主键
+
+2. IndexedDB 持久化
+   - 存储音频文件 Blob 数据
+   - 音频文件元数据
+   - 缓存策略管理
 
 #### 数据结构
-笔记数据包含:
-- 基础信息(标题、路径等)
-- 笔记内容
-- 录音信息(转录文本、时间戳等) 
-- 录音文件
-- 对话数据(后期扩展)
+笔记数据统一模型:
+1. 基础数据
+   - BaseInfo (标题、路径、标签等)
+   - MetaInfo (字数统计、更新时间等)
+   - CheckInfo (同步状态、版本控制)
 
-#### 云端同步
-使用 PostgreSQL 存储:
-- 笔记基础信息和内容
-- 录音卡片元数据(不含音频文件)
-- 对话数据(后期扩展)
-- 使用乐观锁处理并发
-- 支持软删除
+2. 内容数据
+   - 笔记 Markdown 内容
+   - 音频转录文本和切片信息
+   - 对话上下文和消息历史
 
-#### 同步策略
-- 增量同步
-- 冲突检测与合并
-- 录音文件暂不同步
+3. 关联数据
+   - 音频文件 (仅 IndexedDB)
+   - 对话消息流
+   - 软删除信息
 
-#### PostgreSQL 数据库设计
+#### 云端同步 (PostgreSQL)
+1. 同步范围
+   - 笔记基础信息 (BaseInfo, MetaInfo)
+   - 笔记内容
+   - 音频转录数据 (不含音频文件)
+   - 对话历史
+
+2. 同步机制
+   - 乐观锁 (version 控制)
+   - 软删除 (DeletedInfo)
+   - 增量同步 (CheckInfo 状态追踪)
+
+3. 冲突处理
+   - 基于内容哈希的冲突检测
+   - 冲突历史记录
+   - 手动/自动合并策略
+
+#### PostgreSQL 数据库设计优化
+1. 认证相关表
 ```
-// 认证相关表
 interface AuthSchema {
   users: {
     uuid: string;              // PRIMARY KEY
@@ -58,50 +78,125 @@ interface AuthSchema {
     created_at: timestamp;
   };
 }
+```
 
-// 笔记相关表
+2. 通用接口
+```
+// 笔记基础信息
+interface BaseInfo {
+  title: string;
+  path: string;
+  type: string;
+  tags: string[];
+  isPinned: boolean;
+  position: number;
+}
+
+interface MetaInfo {
+  wordCount: number;
+  readTime: number;
+  references: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastViewedAt: string;
+}
+
+// 同步检查信息
+interface CheckInfo {
+  version: number;
+  status: 'synced' | 'local' | 'syncing' | 'error';
+  hash: string;
+  lastSyncAt?: string;
+  errorMsg?: string;
+  conflicts?: Array<{
+    serverHash: string;
+    localHash: string;
+    resolvedAt: string;
+  }>;
+}
+
+// 删除信息
+interface DeletedInfo {
+  isDeleted: boolean;
+  deletedAt: string;
+  expireAt: string;
+  deletedBy: string;
+  reason?: string;
+  originalPath?: string;
+}
+
+// 音频相关接口
+interface AudioSlice {
+  uuid: string;
+  transcript: string;
+  audioInfo: {
+    duration: number;
+    createdAt: string;
+  };
+}
+
+interface AudioContentInfo {
+  slices: Record<string, AudioSlice>;
+}
+
+// 对话相关接口
+interface Message {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  model?: string;         // 可选，assistant 消息才有
+  usage?: {              // 可选，assistant 消息才有
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  createdAt: number;
+}
+
+interface ChatInfo {
+  messages: Message[];
+  metadata?: {
+    title?: string;
+    summary?: string;
+    tags?: string[];
+  };
+}
+```
+
+3. PostgreSQL 数据库设计
+```
 interface NoteSchema {
   notes: {
-    user_uuid: string;          // FOREIGN KEY -> users.uuid
-    uuid: string;              // PRIMARY KEY
-    title: string;
-    info: json;                 // 笔记信息:路径、分类、关键词
-    created_at: timestamp;
-    updated_at: timestamp;
-    last_viewed_at: timestamp;
-    sync_version: number;      // 乐观锁，处理并发
-    deleted_at: timestamp;     // 软删除
+    uuid: string;
+    user_uuid: string;
+    base_info: BaseInfo;
+    meta_info: MetaInfo;
+    check_info: CheckInfo;
+    deleted_info: DeletedInfo;
   };
 
   note_contents: {
-    note_uuid: string;         // FOREIGN KEY -> notes.uuid
+    note_uuid: string;
     content: text;
-    updated_at: timestamp;
-    sync_version: number;
+    check_info: CheckInfo;
   };
 
   audio_notes: {
-    user_uuid: string;        // FOREIGN KEY -> users.uuid
-    uuid: string;             // PRIMARY KEY
-    note_uuid: string;        // FOREIGN KEY -> notes.uuid
-    merged_content: text;     // 合并文本
-    slices_info: json;        // 切片信息：转录文本、录音信息
-    created_at: timestamp;
-    updated_at: timestamp;
-    sync_version: number;
-    deleted_at: timestamp;    // 软删除
+    uuid: string;
+    note_uuid: string;
+    user_uuid: string;
+    mergedContent: string;
+    content_info: AudioContentInfo;
+    check_info: CheckInfo;
+    deleted_info: DeletedInfo;
   };
 
-  // 后期增加
   chat_messages: {
-    user_uuid: string;        // FOREIGN KEY -> users.uuid
-    uuid: string;            // PRIMARY KEY
-    note_uuid: string;       // FOREIGN KEY -> notes.uuid
-    content: json;          // 请求返回内容
-    created_at: timestamp;
-    updated_at: timestamp;
-    sync_version: number;
-    deleted_at: timestamp;    // 软删除
+    uuid: string;
+    note_uuid: string;
+    user_uuid: string;
+    chat_info: ChatInfo;
+    check_info: CheckInfo;
+    deleted_info: DeletedInfo;
   };
 }
 ```
@@ -111,41 +206,29 @@ interface NoteSchema {
 interface LocalStore {
   notes: {
     [uuid: string]: {
-      // 笔记基础信息
-      title: string;
-      info: json; // 笔记信息:路径、分类、关键词
-      createdAt: string;
-      updatedAt: string;
-      lastViewedAt: string;
-      syncVersion: number;
-      syncStatus: 'synced' | 'local' | 'syncing' | 'error';
+      // 基础信息
+      base_info: BaseInfo;
+      meta_info: MetaInfo;
+      check_info: CheckInfo;
       
       // 笔记内容
       content: string;
-      contentSyncVersion: number;
-      contentSyncStatus: 'synced' | 'local' | 'syncing' | 'error';
+      content_check_info: CheckInfo;
       
       // 关联的音频笔记
       audioNotes: {
         [uuid: string]: {
-          mergedContent: string;  // 合并文本
-          slicesInfo: json;       // 切片信息：转录文本、录音信息
-          createdAt: string;
-          updatedAt: string;
-          syncVersion: number;
-          syncStatus: 'synced' | 'local' | 'syncing' | 'error';
+          mergedContent: string;
+          content_info: AudioContentInfo;
+          check_info: CheckInfo;
         }
       };
       
-      // 后期增加：对话数据
+      // 对话数据
       chatMessages: {
         [uuid: string]: {
-          role: 'user' | 'assistant';
-          content: json;          // 请求返回内容
-          createdAt: string;
-          updatedAt: string;      // 增加更新时间
-          syncVersion: number;
-          syncStatus: 'synced' | 'local' | 'syncing' | 'error';
+          chat_info: ChatInfo;
+          check_info: CheckInfo;
         }
       };
     }
@@ -153,10 +236,10 @@ interface LocalStore {
   
   // 同步队列
   syncQueue: {
-    notes: string[];            // 待同步的笔记 uuid
-    contents: string[];         // 待同步的内容 uuid
-    audioNotes: string[];       // 待同步的录音信息 uuid
-    chatMessages: string[];     // 待同步的对话 uuid
+    notes: string[];
+    contents: string[];
+    audioNotes: string[];
+    chatMessages: string[];
   };
 }
 ```
@@ -167,24 +250,20 @@ interface AudioStorage {
   audioFiles: {
     [uuid: string]: {
       blob: Blob;
-      hash: string;           // 文件完整性校验
+      hash: string;           // 文件校验
       noteUuid: string;       // 关联的笔记ID
-      lastAccessed: string;   // 最后访问时间，用于缓存清理
+      sliceUuid: string;      // 关联的音频切片UUID
     }
   };
 }
 ```
-
 
 ### 语音转录模块
 
 #### 转录卡片
 - 音频模块布局
 - 交互卡片
-- 数据持久化
-  - 使用 IndexedDB 存储音频文件（wav blob）
-  - 使用 localStorage 存储卡片元数据
-  - 使用 Map 作为运行时缓存
+- 音频切片
 
 #### 转录能力
 - API实现
