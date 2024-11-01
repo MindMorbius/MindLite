@@ -85,6 +85,24 @@ export default function WorkspaceNav({ onMenuClick }) {
               leaveTo="transform opacity-0 scale-95"
             >
               <MenuItems className="absolute left-0 mt-2 w-60 origin-top-left bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                {/* 添加新笔记按钮 */}
+                <MenuItem>
+                  {({ active }) => (
+                    <button
+                      onClick={handleAddNote}
+                      className={`${
+                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
+                      } w-full text-left px-4 py-2 text-sm flex items-center text-blue-600 dark:text-blue-400`}
+                    >
+                      <PlusIcon className="w-4 h-4 mr-2" />
+                      <span>新建笔记</span>
+                    </button>
+                  )}
+                </MenuItem>
+
+                {/* 分隔线 */}
+                <div className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+
                 {recentNotes.map(note => (
                   <MenuItem key={note.id}>
                     {({ active }) => (
@@ -119,15 +137,7 @@ export default function WorkspaceNav({ onMenuClick }) {
               <PlusIcon className="w-5 h-5 mr-1" />
               <span>速记</span>
             </Button>
-            <Button 
-              onClick={handleAddNote}
-              size="sm" 
-              variant="secondary"
-              className="min-w-[80px] flex items-center justify-center"
-            >
-              <PlusIcon className="w-5 h-5 mr-1" />
-              <span>笔记</span>
-            </Button>
+
           </div>
           <div className="hidden md:flex items-center divide-x divide-gray-200 dark:divide-gray-700">
             <span className="px-3 text-sm text-gray-600 dark:text-gray-300">笔记: {totalNotes}</span>
@@ -141,81 +151,28 @@ export default function WorkspaceNav({ onMenuClick }) {
           {user ? (
             <button
               onClick={() => setShowUserDialog(true)}
-              className="flex items-center"
+              className="flex items-center relative"
             >
               <img 
                 src={user.user_metadata.avatar_url} 
                 alt="avatar"
-                className="w-8 h-8 rounded-full hover:ring-2 ring-blue-500"
+                className="w-8 h-8 rounded-full hover:ring-4 ring-blue-500/50 transition-all duration-300 hover:scale-110 shadow-lg"
               />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
             </button>
           ) : (
             <Button
               size="sm"
-              variant="ghost"
+              variant="ghost" 
               onClick={() => setIsLoginOpen(true)}
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 transition-all duration-300 hover:scale-105 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
             >
               <UserIcon className="w-5 h-5" />
-              <span className="hidden md:inline">登录</span>
+              <span className="hidden md:inline font-medium">登录</span>
             </Button>
           )}
-          
-          <Menu as="div" className="relative">
-            <MenuButton as={Button} size="sm" aria-label="设置">
-              <SettingsIcon className="w-5 h-5" />
-            </MenuButton>
-            
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <MenuItems className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                <MenuItem>
-                  {({ active }) => (
-                    <button
-                      className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                      } flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200`}
-                    >
-                      <ShareIcon className="w-5 h-5 mr-2" />
-                      分享
-                    </button>
-                  )}
-                </MenuItem>
-                <MenuItem>
-                  {({ active }) => (
-                    <div
-                      className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                      } flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200`}
-                    >
-                      <ThemeToggle />
-                    </div>
-                  )}
-                </MenuItem>
-                <MenuItem>
-                  {({ active }) => (
-                    <Link
-                      href="/"
-                      className={`${
-                        active ? 'bg-gray-100 dark:bg-gray-700' : ''
-                      } flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200`}
-                    >
-                      <HomeIcon className="w-5 h-5 mr-2" />
-                      回到主页
-                    </Link>
-                  )}
-                </MenuItem>
-              </MenuItems>
-            </Transition>
-          </Menu>
         </div>
+        
       </div>
       
       <AuthModal 

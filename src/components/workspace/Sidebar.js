@@ -2,13 +2,15 @@
 
 import useStore from '@/lib/store';
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { 
   PlusIcon,
   DocumentPlusIcon,
   DocumentTextIcon,
   Bars3Icon as MenuIcon,
   BookmarkIcon as PinIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  HomeIcon
 } from '@heroicons/react/24/outline';
 import Button from '@/components/ui/Button';
 import Search from '@/components/workspace/Search';
@@ -132,25 +134,8 @@ export default function Sidebar({ isOpen, onToggle }) {
         `}
       >
         {/* 顶部工具栏 */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="h-14 flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
-            <h2 className="font-semibold">笔记</h2>
-            <Button
-              onClick={handleNewNote}
-              size="sm"
-              title="新建笔记"
-            >
-              <DocumentPlusIcon className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              onClick={() => setViewMode(viewMode === 'tree' ? 'list' : 'tree')}
-              size="sm"
-              title={viewMode === 'tree' ? '列表视图' : '树状视图'}
-            >
-              {viewMode === 'tree' ? '列表' : '树状'}
-            </Button>
             <button 
               onClick={() => onToggle(false)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg md:hidden"
@@ -158,6 +143,14 @@ export default function Sidebar({ isOpen, onToggle }) {
               <MenuIcon className="w-5 h-5" />
             </button>
           </div>
+          <Link
+            href="/"
+            className="flex items-center space-x-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-1.5 md:ml-0 ml-auto"
+            title="回到主页"
+          >
+            <HomeIcon className="w-4 h-4" />
+            <span className="text-sm text-gray-700 dark:text-gray-200">MindLite</span>
+          </Link>
         </div>
         
         {/* 搜索栏 */}
@@ -172,6 +165,27 @@ export default function Sidebar({ isOpen, onToggle }) {
             />
             <MagnifyingGlassIcon className="absolute left-2.5 top-2 w-4 h-4 text-gray-400" />
           </div>
+        </div>
+
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
+          <Button
+            onClick={() => setViewMode(viewMode === 'tree' ? 'list' : 'tree')}
+            size="sm"
+            variant="ghost" 
+            className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+          >
+            {viewMode === 'tree' ? '列表' : '树状'}
+          </Button>
+
+          <Button
+            onClick={handleNewNote}
+            size="sm" 
+            variant="primary"
+            className="flex items-center space-x-1.5"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span>新建笔记</span>
+          </Button>
         </div>
 
         {/* 添加置顶笔记列表 */}

@@ -88,7 +88,10 @@ export default function UserDialog({ isOpen, onClose }) {
                   </Button>
                   <Button
                     variant="destructive"
-                    onClick={signOut}
+                    onClick={() => {
+                      signOut()
+                      onClose()
+                    }}
                   >
                     退出登录
                   </Button>
