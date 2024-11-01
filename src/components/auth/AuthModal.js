@@ -87,15 +87,15 @@ export default function AuthModal({ isOpen, onClose }) {
                   
                   <Button
                     variant="outline"
-                    className="w-full flex items-center justify-center space-x-2 h-12 opacity-50 cursor-not-allowed"
-                    disabled
+                    className="w-full flex items-center justify-center space-x-2 h-12"
+                    onClick={() => window.location.href = '/api/auth/linux-do'}
                   >
                     <svg className="w-6 h-6" viewBox="0 0 24 24">
                       <rect x="0" y="0" width="24" height="8" fill="#000000" />
                       <rect x="0" y="8" width="24" height="8" fill="#FFFFFF" />
                       <rect x="0" y="16" width="24" height="8" fill="#FFA500" />
                     </svg>
-                    <span>使用 Linux.do 登录 (未实现)</span>
+                    <span>{isLoading ? '登录中...' : '使用 Linux.do 登录'}</span>
                   </Button>
                 </div>
 
