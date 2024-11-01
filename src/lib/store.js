@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from './supabase'
 
 const ROOT_PATH = '/';
 const QUICK_NOTES_PATH = '/速记';
 
 export const useStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       notes: [],
       folders: [
         { id: QUICK_NOTES_PATH, name: '速记', path: QUICK_NOTES_PATH }
       ],
       activeNoteId: null,
+      user: null,
       
       setActiveNote: (id) => set((state) => {
         if (!id) return { activeNoteId: null };
@@ -136,6 +138,13 @@ export const useStore = create(
           activeNoteId: id
         };
       }),
+      
+      setUser: (user) => set({ user }),
+      
+      signOut: async () => {
+        await supabase.auth.signOut()
+        set({ user: null })
+      },
     }),
     {
       name: 'mindlite-storage',

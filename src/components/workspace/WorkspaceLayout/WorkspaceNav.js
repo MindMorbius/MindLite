@@ -10,7 +10,8 @@ import {
   ShareIcon,
   Cog6ToothIcon as SettingsIcon,
   HomeIcon,
-  PlusIcon
+  PlusIcon,
+  UserIcon
 } from '@heroicons/react/24/solid';
 import Button from '@/components/ui/Button';
 import { Menu, Transition, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
@@ -18,9 +19,13 @@ import { useStore } from '@/lib/store';
 import { Fragment } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import AuthModal from '@/components/auth/AuthModal'
+import UserDialog from '@/components/auth/UserDialog'
 
 export default function WorkspaceNav({ onMenuClick }) {
-  const { notes, addQuickNote, addNote, activeNoteId, setActiveNote } = useStore();
+  const { notes, addQuickNote, addNote, activeNoteId, setActiveNote, user, signOut } = useStore();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [showUserDialog, setShowUserDialog] = useState(false)
   
   const totalNotes = notes.length;
   const quickNotes = notes.filter(note => note.path === '/速记').length;
@@ -133,6 +138,29 @@ export default function WorkspaceNav({ onMenuClick }) {
         
         {/* 右侧按钮 */}
         <div className="flex items-center space-x-2">
+          {user ? (
+            <button
+              onClick={() => setShowUserDialog(true)}
+              className="flex items-center"
+            >
+              <img 
+                src={user.user_metadata.avatar_url} 
+                alt="avatar"
+                className="w-8 h-8 rounded-full hover:ring-2 ring-blue-500"
+              />
+            </button>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsLoginOpen(true)}
+              className="flex items-center space-x-1"
+            >
+              <UserIcon className="w-5 h-5" />
+              <span className="hidden md:inline">登录</span>
+            </Button>
+          )}
+          
           <Menu as="div" className="relative">
             <MenuButton as={Button} size="sm" aria-label="设置">
               <SettingsIcon className="w-5 h-5" />
@@ -189,6 +217,15 @@ export default function WorkspaceNav({ onMenuClick }) {
           </Menu>
         </div>
       </div>
+      
+      <AuthModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+      />
+      <UserDialog 
+        isOpen={showUserDialog} 
+        onClose={() => setShowUserDialog(false)} 
+      />
     </nav>
   );
 }
