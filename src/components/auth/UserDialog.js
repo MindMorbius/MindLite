@@ -7,18 +7,7 @@ import { useStore } from '@/lib/store'
 export default function UserDialog({ isOpen, onClose }) {
   const { user, signOut } = useStore()
   const metadata = user?.user_metadata || {}
-  const provider = user?.app_metadata?.provider
   const createdAt = new Date(user?.created_at).toLocaleDateString('zh-CN')
-
-  const accountInfo = [
-    { label: '用户名', value: metadata.user_name || metadata.name },
-    { label: '邮箱', value: user?.email },
-    provider === 'linux_do' && { label: 'Linux.do ID', value: metadata.linux_do_id },
-    provider === 'linux_do' && { label: '信任等级', value: metadata.trust_level },
-    { label: '注册时间', value: createdAt },
-    { label: '登录方式', value: provider === 'linux_do' ? 'Linux.do' : 'GitHub' },
-    { label: '最后登录', value: metadata.last_sign_in && new Date(metadata.last_sign_in).toLocaleString('zh-CN') }
-  ].filter(Boolean)
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -74,13 +63,8 @@ export default function UserDialog({ isOpen, onClose }) {
                       账号信息
                     </h4>
                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      {accountInfo.map(({ label, value }) => (
-                        value && (
-                          <p key={label}>
-                            {label}: {value}
-                          </p>
-                        )
-                      ))}
+                      <p>注册时间: {createdAt}</p>
+                      <p>登录方式: {user?.app_metadata?.provider}</p>
                     </div>
                   </div>
 
