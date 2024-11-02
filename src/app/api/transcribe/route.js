@@ -25,18 +25,24 @@ export async function POST(request) {
 
     clearTimeout(timeoutId);
     
-    // 添加响应类型检查
+    let data;
     const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('Invalid response type:', contentType, 'Response:', text);
+    try {
+      // 尝试解析 JSON
+      if (contentType?.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // 如果不是 JSON，获取原始文本
+        const text = await response.text();
+        data = { text }; // 将文本包装成预期的格式
+      }
+    } catch (error) {
+      console.error('Response parsing error:', error);
       return NextResponse.json(
-        { error: '服务器返回了非预期的响应格式' },
+        { error: '无法解析服务器响应' },
         { status: 500 }
       );
     }
-
-    const data = await response.json();
 
     // 处理不同状态码
     switch (response.status) {
