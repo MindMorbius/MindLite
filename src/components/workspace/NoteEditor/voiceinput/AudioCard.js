@@ -77,7 +77,14 @@ export const AudioCard = ({
         body: formData
       });
       
-      const result = await response.json();
+      let result;
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        result = { text };
+      }
       
       if (!response.ok) {
         const errorMsg = `[${response.status}] ${result.error}`;
