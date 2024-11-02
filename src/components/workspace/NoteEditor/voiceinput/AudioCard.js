@@ -16,6 +16,7 @@ export const AudioCard = ({
   const [error, setError] = useState(initialError);
   const audio = audioStorage.get(id);
   const [status, setStatus] = useState('idle'); // idle, converting, uploading, transcribing, error
+  const [service, setService] = useState('siliconflow');
 
   const convertToWav = async (audioBlob) => {
     const audioContext = new AudioContext();
@@ -72,7 +73,7 @@ export const AudioCard = ({
       formData.append('file', wavBlob, 'audio.wav');
       
       setStatus('transcribing');
-      const response = await fetch('/api/transcribe', {
+      const response = await fetch(`/api/transcribe/${service}`, {
         method: 'POST',
         body: formData
       });
@@ -172,11 +173,46 @@ export const AudioCard = ({
     }
   };
 
+  const renderTranscribeButton = () => (
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="flex items-center gap-2">
+        <select
+          value={service}
+          onChange={(e) => setService(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-gray-700 text-sm rounded-md px-2 py-1 text-gray-300 border-none"
+        >
+          <option value="siliconflow">语音转文字</option>
+          <option value="assemblyai">说话人识别</option>
+        </select>
+        <button
+          onClick={handleTranscribe}
+          disabled={status !== 'idle'}
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
+            hover:bg-emerald-500/30 text-emerald-400 rounded-full 
+            transition-colors disabled:opacity-50"
+        >
+          {getButtonContent()}
+        </button>
+      </div>
+      <div className="text-xs text-gray-500">
+        {getStatusDescription()}
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     if (transcription || initialTranscription) {
       return (
-        <div className="text-gray-300 text-sm break-words whitespace-pre-wrap">
-          {transcription || initialTranscription}
+        <div className="space-y-3">
+          <div className="text-gray-300 text-sm break-words whitespace-pre-wrap">
+            {transcription || initialTranscription}
+          </div>
+          {selected && (
+            <div className="flex justify-center">
+              {renderTranscribeButton()}
+            </div>
+          )}
         </div>
       );
     }
@@ -189,35 +225,11 @@ export const AudioCard = ({
               {error || initialError}
             </div>
             <div className="flex flex-col items-center gap-2">
-              <button
-                onClick={handleTranscribe}
-                disabled={status !== 'idle'}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm 
-                  bg-red-500/20 hover:bg-red-500/30 text-red-400 
-                  rounded-full transition-colors disabled:opacity-50"
-              >
-                {getButtonContent()}
-              </button>
-              <div className="text-xs text-gray-500">
-                {getStatusDescription()}
-              </div>
+              {renderTranscribeButton()}
             </div>
           </div>
         ) : audio ? (
-          <div className="flex flex-col items-center gap-2 w-full">
-            <button
-              onClick={handleTranscribe}
-              disabled={status !== 'idle'}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500/20 
-                hover:bg-emerald-500/30 text-emerald-400 rounded-full 
-                transition-colors disabled:opacity-50"
-            >
-              {getButtonContent()}
-            </button>
-            <div className="text-xs text-gray-500">
-              {getStatusDescription()}
-            </div>
-          </div>
+          renderTranscribeButton()
         ) : null}
       </div>
     );
